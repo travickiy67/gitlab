@@ -34,6 +34,8 @@
 
 **Что нужно сделать:**
 
+**Во втором заданиии пришлось поднимать две машины в yndex-cloud**  
+
 1. Запушьте [репозиторий](https://github.com/netology-code/sdvps-materials/tree/main/gitlab) на GitLab, изменив origin. Это изучалось на занятии по Git.
 2. Создайте .gitlab-ci.yml, описав в нём все необходимые, на ваш взгляд, этапы.
 
@@ -41,7 +43,31 @@
    
  * файл gitlab-ci.yml для своего проекта или вставьте код в соответствующее поле в шаблоне; 
  * скриншоты с успешно собранными сборками.
- 
+```
+stages:
+  - test
+  - build
+
+test:
+  stage: test
+  image: golang:1.17
+  script:
+   - go test .
+sonarqube-check:
+ stage: test
+ image:
+  name: sonarsource/sonar-scanner-cli
+  entrypoint: [""]
+ variables:
+ script:
+  - sonar-scanner -Dsonar.projectKey=gitlab -Dsonar.projectName='gitlab' -Dsonar.host.url=http://158.160.136.231:9000  -Dsonar.token=sqp_1185087e8e30f9d20ef75140d2119928e8671195
+
+build:
+  stage: build
+  image: docker:latest
+  script:
+   - docker build .
+``` 
  
 ---
 ## Дополнительные задания* (со звёздочкой)
