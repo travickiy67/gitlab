@@ -66,9 +66,8 @@ build:
   stage: build
   image: docker:latest
   script:
-   - docker build .
-``` 
- 
+   - docker build . 
+```
 ---
 ## Дополнительные задания* (со звёздочкой)
 
@@ -80,7 +79,93 @@ build:
 
 Измените CI так, чтобы:
 
- - этап сборки запускался сразу, не дожидаясь результатов тестов;
- - тесты запускались только при изменении файлов с расширением *.go.
+ - этап сборки запускался сразу, не дожидаясь результатов тестов;  
+```
+stages:
+  - test
+  - static-analysis
+  - build
 
+test:
+  stage: test
+  image: golang:1.17
+  script:
+   - go test .
+static-analysis:
+ stage: test
+ image:
+  name: sonarsource/sonar-scanner-cli
+  entrypoint: [""]
+ variables:
+ script:
+  - sonar-scanner -Dsonar.projectKey=gitlab -Dsonar.projectName='gitlab' -Dsonar.sources=. -Dsonar.host.url=http://51.250.36.218:9000 -Dsonar.login=sqp_1185087e8e30f9d20ef75140d2119928e8671195
+  
+build:
+  stage: test
+  image: docker:latest
+  script:
+   - docker build .
+  tags:
+    - runner1
+
+```
+ - тесты запускались только при изменении файлов с расширением *.go  
+ 
+**go test не выполняется если файл** *.go не изменялся.  
+
+```
+stages:
+  - test
+  - build
+
+test:
+  stage: test
+  image: golang:1.17
+  script:
+   - go test .
+  only:
+    refs:
+      - branches
+    changes:
+      - "*.go"  
+sonarqube-check:
+ stage: test
+ image:
+  name: sonarsource/sonar-scanner-cli
+  entrypoint: [""]
+ variables:
+ script:
+  - sonar-scanner -Dsonar.projectKey=gitlab -Dsonar.projectName='gitlab' -Dsonar.host.url=http://158.160.136.231:9000  -Dsonar.token=sqp_1185087e8e30f9d20ef75140d2119928e8671195
+
+build:
+  stage: build
+  image: docker:latest
+  script:
+   - docker build .
+```
+или такой вариант.  
+```
+stages:
+  - test
+  - static-analysis
+
+test:
+  stage: test
+  image: golang:1.17
+  script:
+   - go test .
+build:
+  stage: test
+  image: docker:latest
+  script:
+   - docker build .
+static-analysis:
+ stage: test
+ image:
+  name: sonarsource/sonar-scanner-cli
+  entrypoint: [""]
+ variables:
+ script:
+  - sonar-scanner -Dsonar.projectKey=gitlab -Dsonar.projectName='gitlab' -Dsonar.sources=. -Dsonar.host.url=http://51.250.36.218:9000 -Dsonar.login=sqp_1185087e8e30f9d20ef75140d2119928e8671195
+```
 В качестве ответа добавьте в шаблон с решением файл gitlab-ci.yml своего проекта или вставьте код в соответсвующее поле в шаблоне.
